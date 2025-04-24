@@ -22,6 +22,7 @@ public class Book {
     private String author;
     private String isbn;
     private String publisher;
-    private String urlString;
+    private String thumbnail;
+   
 }
 

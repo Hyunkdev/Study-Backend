@@ -1,8 +1,7 @@
-// src/components/BookForm.js
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import '../styles/BookForm.css';
+import '../styles/BookForm.css'; // 스타일도 꼭 포함
 
 const BookForm = () => {
   const [book, setBook] = useState({
@@ -13,9 +12,13 @@ const BookForm = () => {
     thumbnail: '',
   });
 
-  const KAKAO_API_KEY = 'c2cdcb1669151f246510e55c5e3f1722';
+  const [suggestions, setSuggestions] = useState([]); // 자동완성 리스트
+  const [showSuggestions, setShowSuggestions] = useState(false); // 드롭다운 표시 여부
+
+  const KAKAO_API_KEY = 'c2cdcb1669151f246510e55c5e3f1722'; // 여기에 너의 API 키 넣기
   const navigate = useNavigate();
 
+  // 입력값 변경 처리
   const handleChange = async (e) => {
     const { name, value } = e.target;
 
@@ -24,7 +27,7 @@ const BookForm = () => {
       [name]: value,
     }));
 
-    // 제목이 입력될 때만 카카오 API 호출
+    // 제목 자동완성
     if (name === 'title' && value.trim() !== '') {
       try {
         const response = await axios.get('https://dapi.kakao.com/v3/search/book', {
@@ -37,22 +40,30 @@ const BookForm = () => {
           },
         });
 
-        const result = response.data.documents[0];
-        if (result) {
-          setBook((prev) => ({
-            ...prev,
-            thumbnail: result.thumbnail || '',
-            author: prev.author || result.authors?.[0] || '',
-            publisher: prev.publisher || result.publisher || '',
-            isbn: prev.isbn || result.isbn || '',
-          }));
-        }
+        setSuggestions(response.data.documents || []);
+        setShowSuggestions(true);
       } catch (error) {
-        console.error('Kakao API 에러:', error);
+        console.error('Kakao 책 검색 에러:', error);
       }
+    } else {
+      setShowSuggestions(false);
     }
   };
 
+  // 추천 항목 클릭 시 자동 입력
+  const handleSuggestionClick = (item) => {
+    setBook({
+      title: item.title || '',
+      author: item.authors?.[0] || '',
+      isbn: item.isbn || '',
+      publisher: item.publisher || '',
+      thumbnail: item.thumbnail || '',
+    });
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  // 제출 처리
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -68,13 +79,58 @@ const BookForm = () => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <input name="title" value={book.title} onChange={handleChange} placeholder="제목" required />
-      <input name="author" value={book.author} onChange={handleChange} placeholder="저자" required />
-      <input name="isbn" value={book.isbn} onChange={handleChange} placeholder="ISBN" required />
-      <input name="publisher" value={book.publisher} onChange={handleChange} placeholder="출판사" required />
+      <div style={{ position: 'relative' }}>
+        <input
+          name="title"
+          value={book.title}
+          onChange={handleChange}
+          placeholder="제목"
+          required
+          autoComplete="off"
+        />
+        {showSuggestions && suggestions.length > 0 && (
+          <ul className="autocomplete-list">
+            {suggestions.slice(0, 5).map((item, index) => (
+              <li
+                key={index}
+                className="autocomplete-item"
+                onClick={() => handleSuggestionClick(item)}
+              >
+                {item.title}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <input
+        name="author"
+        value={book.author}
+        onChange={handleChange}
+        placeholder="저자"
+        required
+      />
+      <input
+        name="isbn"
+        value={book.isbn}
+        onChange={handleChange}
+        placeholder="ISBN"
+        required
+      />
+      <input
+        name="publisher"
+        value={book.publisher}
+        onChange={handleChange}
+        placeholder="출판사"
+        required
+      />
 
       {book.thumbnail && (
-        <img src={book.thumbnail} alt="책 이미지" style={{ width: '120px', marginTop: '10px' }} />
+        <img
+          src={book.thumbnail}
+          alt="책 썸네일"
+          style={{ width: '120px', marginTop: '10px' }}
+        />
       )}
 
       <button type="submit">책 등록</button>

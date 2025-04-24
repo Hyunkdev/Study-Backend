@@ -1,9 +1,12 @@
+// src/components/BookList.js
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import '../styles/BookList.css'; // CSS 파일을 import 합니다.
+import { useNavigate } from 'react-router-dom';
+import '../styles/BookList.css'; // 스타일도 꼭 포함
 
 function BookList() {
   const [books, setBooks] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     axios.get('http://localhost:8080/api/books')
@@ -15,16 +18,70 @@ function BookList() {
       });
   }, []);
 
+  const handleEdit = (book) => {
+    navigate('/edit', { state: book });
+  };
+
+  const handleDelete = async (id) => {
+    const ok = window.confirm('정말 삭제할까요?');
+    if (!ok) return;
+
+    try {
+      await axios.delete(`http://localhost:8080/api/books/${id}`);
+      alert('삭제 완료!');
+      setBooks(prev => prev.filter(b => b.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert('삭제 실패 😢');
+    }
+  };
+
   return (
     <div style={{ marginTop: '30px' }}>
-      <h2>등록된 책 목록</h2>
-      <ul style={{ listStyle: 'none', padding: 0, textAlign: 'center'}}>
+      <h2>📚 등록된 책 목록</h2>
+      <div style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '16px',
+        justifyContent: 'center'
+      }}>
         {books.map((book) => (
-          <li key={book.id} style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-            <strong>{book.title}</strong> - {book.author} ({book.publisher}) - {book.isbn}
-          </li>
+          <div key={book.id} style={{
+            border: '1px solid #ccc',
+            borderRadius: '8px',
+            padding: '16px',
+            width: '250px',
+            backgroundColor: '#f9f9f9'
+          }}>
+            {book.thumbnail ? (
+              <img
+                src={book.thumbnail}
+                alt={`${book.title} 썸네일`}
+                style={{ width: '100%', height: 'auto', borderRadius: '4px' }}
+              />
+            ) : (
+              <div style={{
+                width: '100%',
+                height: '160px',
+                backgroundColor: '#eee',
+                textAlign: 'center',
+                lineHeight: '160px',
+                color: '#aaa',
+                fontSize: '14px'
+              }}>
+                이미지 없음
+              </div>
+            )}
+            <h3 style={{ fontSize: '16px', margin: '10px 0 4px' }}>{book.title}</h3>
+            <p style={{ fontSize: '14px', color: '#555' }}>{book.author}</p>
+            <p style={{ fontSize: '12px', color: '#777' }}>{book.publisher}</p>
+            <div style={{ marginTop: '10px', display: 'flex', gap: '100px' }}>
+              <button class="edbutton" onClick={() => handleEdit(book)}>수정</button>
+              <button class="edbutton" onClick={() => handleDelete(book.id)}>삭제</button>
+            </div>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
