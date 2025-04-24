@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+// src/components/BookForm.js
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import '../styles/BookForm.css'; // 스타일도 꼭 포함
+import { useNavigate, useLocation } from 'react-router-dom';
+import '../styles/BookForm.css';
 
 const BookForm = () => {
   const [book, setBook] = useState({
@@ -9,25 +10,25 @@ const BookForm = () => {
     author: '',
     isbn: '',
     publisher: '',
-    thumbnail: '',
+    thumbnail: ''
   });
 
-  const [suggestions, setSuggestions] = useState([]); // 자동완성 리스트
-  const [showSuggestions, setShowSuggestions] = useState(false); // 드롭다운 표시 여부
-
-  const KAKAO_API_KEY = 'c2cdcb1669151f246510e55c5e3f1722'; // 여기에 너의 API 키 넣기
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const KAKAO_API_KEY = 'c2cdcb1669151f246510e55c5e3f1722'; // 실제 발급받은 키로 교체 필요
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // 입력값 변경 처리
+  useEffect(() => {
+    if (location.state) {
+      setBook(location.state);
+    }
+  }, [location]);
+
   const handleChange = async (e) => {
     const { name, value } = e.target;
+    setBook((prev) => ({ ...prev, [name]: value }));
 
-    setBook((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    // 제목 자동완성
     if (name === 'title' && value.trim() !== '') {
       try {
         const response = await axios.get('https://dapi.kakao.com/v3/search/book', {
@@ -36,8 +37,8 @@ const BookForm = () => {
           },
           params: {
             query: value,
-            target: 'title',
-          },
+            target: 'title'
+          }
         });
 
         setSuggestions(response.data.documents || []);
@@ -50,30 +51,32 @@ const BookForm = () => {
     }
   };
 
-  // 추천 항목 클릭 시 자동 입력
   const handleSuggestionClick = (item) => {
     setBook({
       title: item.title || '',
       author: item.authors?.[0] || '',
       isbn: item.isbn || '',
       publisher: item.publisher || '',
-      thumbnail: item.thumbnail || '',
+      thumbnail: item.thumbnail || ''
     });
     setSuggestions([]);
     setShowSuggestions(false);
   };
 
-  // 제출 처리
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:8080/api/books', book);
-      alert('책 등록 성공!');
-      setBook({ title: '', author: '', isbn: '', publisher: '', thumbnail: '' });
+      if (book.id) {
+        await axios.put(`http://localhost:8080/api/books/${book.id}`, book);
+        alert('책 수정 완료!');
+      } else {
+        await axios.post('http://localhost:8080/api/books', book);
+        alert('책 등록 완료!');
+      }
       navigate('/');
     } catch (err) {
       console.error(err);
-      alert('등록 실패 😢');
+      alert('요청 실패 😢');
     }
   };
 
@@ -93,8 +96,8 @@ const BookForm = () => {
             {suggestions.slice(0, 5).map((item, index) => (
               <li
                 key={index}
-                className="autocomplete-item"
                 onClick={() => handleSuggestionClick(item)}
+                className="autocomplete-item"
               >
                 {item.title}
               </li>
@@ -102,38 +105,13 @@ const BookForm = () => {
           </ul>
         )}
       </div>
-
-      <input
-        name="author"
-        value={book.author}
-        onChange={handleChange}
-        placeholder="저자"
-        required
-      />
-      <input
-        name="isbn"
-        value={book.isbn}
-        onChange={handleChange}
-        placeholder="ISBN"
-        required
-      />
-      <input
-        name="publisher"
-        value={book.publisher}
-        onChange={handleChange}
-        placeholder="출판사"
-        required
-      />
-
+      <input name="author" value={book.author} onChange={handleChange} placeholder="저자" required />
+      <input name="isbn" value={book.isbn} onChange={handleChange} placeholder="ISBN" required />
+      <input name="publisher" value={book.publisher} onChange={handleChange} placeholder="출판사" required />
       {book.thumbnail && (
-        <img
-          src={book.thumbnail}
-          alt="책 썸네일"
-          style={{ width: '120px', marginTop: '10px' }}
-        />
+        <img src={book.thumbnail} alt="썸네일" style={{ width: '120px', marginTop: '10px' }} />
       )}
-
-      <button type="submit">책 등록</button>
+      <button type="submit">{book.id ? '수정' : '등록'}</button>
     </form>
   );
 };
