@@ -1,7 +1,7 @@
 // src/components/BookForm.js
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import '../styles/BookForm.css';
 
 const BookForm = () => {
@@ -15,15 +15,8 @@ const BookForm = () => {
 
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const KAKAO_API_KEY = 'c2cdcb1669151f246510e55c5e3f1722'; // 실제 발급받은 키로 교체 필요
+  const KAKAO_API_KEY = '카카오 REST API 키';
   const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    if (location.state) {
-      setBook(location.state);
-    }
-  }, [location]);
 
   const handleChange = async (e) => {
     const { name, value } = e.target;
@@ -66,16 +59,11 @@ const BookForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (book.id) {
-        await axios.put(`http://localhost:8080/api/books/${book.id}`, book);
-        alert('책 수정 완료!');
-      } else {
-        await axios.post('http://localhost:8080/api/books', book);
-        alert('책 등록 완료!');
-      }
+      await axios.post('http://localhost:8080/api/books', book);
+      alert('책 등록 완료!');
       navigate('/');
     } catch (err) {
-      console.error(err);
+      console.error('요청 실패 😢', err);
       alert('요청 실패 😢');
     }
   };
@@ -111,7 +99,7 @@ const BookForm = () => {
       {book.thumbnail && (
         <img src={book.thumbnail} alt="썸네일" style={{ width: '120px', marginTop: '10px' }} />
       )}
-      <button type="submit">{book.id ? '수정' : '등록'}</button>
+      <button type="submit">등록</button>
     </form>
   );
 };

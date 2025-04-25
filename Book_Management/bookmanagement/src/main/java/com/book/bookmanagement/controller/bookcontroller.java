@@ -7,10 +7,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/books")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class bookcontroller {
     
     private final bookservice bookService;
@@ -25,5 +25,9 @@ public class bookcontroller {
         return bookService.saveBook(book);
     }
     
+    @DeleteMapping("/{id}")
+    public void deleteBook(@PathVariable Long id) {
+        bookService.deleteBook(id);
+}
 
 }

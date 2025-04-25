@@ -1,12 +1,10 @@
 // src/components/BookList.js
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import '../styles/BookList.css'; // 스타일도 꼭 포함
+import '../styles/BookList.css';
 
 function BookList() {
   const [books, setBooks] = useState([]);
-  const navigate = useNavigate();
 
   useEffect(() => {
     axios.get('http://localhost:8080/api/books')
@@ -17,10 +15,6 @@ function BookList() {
         console.error('책 목록 불러오기 실패:', error);
       });
   }, []);
-
-  const handleEdit = (book) => {
-    navigate('/edit', { state: book });
-  };
 
   const handleDelete = async (id) => {
     const ok = window.confirm('정말 삭제할까요?');
@@ -75,9 +69,8 @@ function BookList() {
             <h3 style={{ fontSize: '16px', margin: '10px 0 4px' }}>{book.title}</h3>
             <p style={{ fontSize: '14px', color: '#555' }}>{book.author}</p>
             <p style={{ fontSize: '12px', color: '#777' }}>{book.publisher}</p>
-            <div style={{ marginTop: '10px', display: 'flex', gap: '100px' }}>
-              <button class="edbutton" onClick={() => handleEdit(book)}>수정</button>
-              <button class="edbutton" onClick={() => handleDelete(book.id)}>삭제</button>
+            <div style={{ marginTop: '10px', textAlign: 'center' }}>
+              <button className="edbutton" onClick={() => handleDelete(book.id)}>삭제</button>
             </div>
           </div>
         ))}
